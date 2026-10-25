@@ -1,0 +1,12 @@
+#!/usr/bin/env python3
+"""Local diagnostic/control client. Only the owning Unix user can connect."""
+import os
+import socket
+import sys
+
+runtime=os.environ.get("XDG_RUNTIME_DIR",f"/run/user/{os.getuid()}")
+with socket.socket(socket.AF_UNIX,socket.SOCK_SEQPACKET) as client:
+    client.settimeout(20)
+    client.connect(runtime+"/zero-browser/control")
+    client.sendall(" ".join(sys.argv[1:] or ["status"]).encode())
+    print(client.recv(16384).decode(),end="")

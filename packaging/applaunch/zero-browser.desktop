@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Zero Browser
+Comment=Browse the web on your Cardputer Zero
+Exec=/usr/bin/zero-browser
+Path=/usr/share/APPLaunch
+Terminal=false
+Sysplause=true
+Categories=Network;WebBrowser;
+Icon=/usr/share/APPLaunch/share/images/zero-browser.png

@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+  <title>Zero-Browser</title>
+  <desc>A luminous teal globe and an ivory pointer on a near-black tile.</desc>
+  <defs>
+    <linearGradient id="tile" x1="24" y1="0" x2="224" y2="256" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#151a21"/>
+      <stop offset=".55" stop-color="#090d13"/>
+      <stop offset="1" stop-color="#030508"/>
+    </linearGradient>
+    <radialGradient id="sphere" cx=".3" cy=".2" r=".95">
+      <stop stop-color="#399dba"/>
+      <stop offset=".52" stop-color="#176986"/>
+      <stop offset="1" stop-color="#103953"/>
+    </radialGradient>
+    <linearGradient id="grid" x1="67" y1="43" x2="174" y2="184" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#d4fff2"/>
+      <stop offset=".5" stop-color="#7be8dc"/>
+      <stop offset="1" stop-color="#45b8c4"/>
+    </linearGradient>
+    <linearGradient id="rim" x1="68" y1="46" x2="180" y2="177" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#c4fff1"/>
+      <stop offset="1" stop-color="#4bc8cd"/>
+    </linearGradient>
+    <linearGradient id="pointer" x1="153" y1="144" x2="191" y2="210" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#cde5ec"/>
+    </linearGradient>
+    <linearGradient id="edge" x1="45" y1="0" x2="211" y2="256" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#85909d" stop-opacity=".22"/>
+      <stop offset=".5" stop-color="#85909d" stop-opacity=".04"/>
+      <stop offset="1" stop-color="#85909d" stop-opacity=".09"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="256" height="256" rx="52" fill="url(#tile)"/>
+  <rect x="1" y="1" width="254" height="254" rx="51" fill="none" stroke="url(#edge)" stroke-width="2"/>
+
+  <!-- Slightly enlarge the globe/pointer within the unchanged launcher tile. -->
+  <g transform="translate(128 128) scale(1.07) translate(-128 -128)">
+  <!-- A restrained offset shadow keeps the silhouette clear at launcher size. -->
+  <g transform="translate(128 128) scale(1.15) translate(-118 -114)">
+    <circle cx="119" cy="122" r="77" fill="#050e1d" opacity=".28"/>
+    <circle cx="118" cy="114" r="74" fill="url(#sphere)"/>
+    <g fill="none" stroke="url(#grid)" stroke-width="4" stroke-linecap="round">
+      <ellipse cx="118" cy="114" rx="33" ry="74"/>
+      <path d="M54 77c31 17 97 17 128 0M44 114h148M54 151c31-17 97-17 128 0"/>
+    </g>
+    <circle cx="118" cy="114" r="74" fill="none" stroke="url(#rim)" stroke-width="5"/>
+  </g>
+
+  <!-- The pointer adds a web cue without small text or decorative details. -->
+  <path d="m150 145 57 43-26 1 15 25-13 8-15-26-15 20z"
+        fill="#050e1d" stroke="#050e1d" stroke-width="9" stroke-linejoin="round" opacity=".3"
+        transform="translate(0 4)"/>
+  <path d="m150 145 57 43-26 1 15 25-13 8-15-26-15 20z"
+        fill="url(#pointer)" stroke="#10263c" stroke-width="5" stroke-linejoin="round"/>
+  </g>
+</svg>
