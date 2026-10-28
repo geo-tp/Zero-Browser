@@ -14,7 +14,7 @@ class WaylandSession {
     using Progress = std::function<bool(int attempt, double elapsed)>;
     WaylandSession();
     ~WaylandSession();
-    bool start(const Paths &, const Progress & = {}); // false when cancelled
+    bool start(const Paths &, const std::string &renderer, const Progress & = {}); // false when cancelled
     void stop();
     void shutdown(const std::function<void()> &heartbeat = {});
     bool alive();

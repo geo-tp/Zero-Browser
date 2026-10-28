@@ -78,7 +78,9 @@ void Application::start(Mode mode) {
         cleanup();
         const int height = mode == Mode::Lite ? 170 : 170 - UIManager::ToolbarHeight;
         startup.run([&] {
-            display_.startSession(paths_, startup, height);
+            // Keep GLES2 for the experimental Cog/EGL backend. The supported
+            // NetSurf and QtWebKit modes use software composition by default.
+            display_.startSession(paths_, startup, height, mode == Mode::Full ? "gles2" : "pixman");
             startup.step("engine", StartupDomain::Application, [&] {
                 browser_ = std::make_unique<BrowserManager>(config_, paths_, display_.wayland, display_.environment(),
                     [this](Mode m) { display_.contentTop(m == Mode::Lite ? 0 : UIManager::ToolbarHeight); });

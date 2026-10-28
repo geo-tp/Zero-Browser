@@ -31,9 +31,12 @@ struct WaylandBridge::Impl {
                                int32_t, const char *, const char *, int32_t transform) {
         static_cast<Impl *>(d)->outputTransform = transform;
     }
-    static void outputMode(void *d, wl_output *, uint32_t flags, int32_t w, int32_t h, int32_t) {
+    static void outputMode(void *d, wl_output *, uint32_t flags, int32_t w, int32_t h, int32_t refresh) {
         if (!(flags & WL_OUTPUT_MODE_CURRENT)) return;
         auto &s = *static_cast<Impl *>(d);
+        if (s.outputWidth != w || s.outputHeight != h)
+            log("wayland.output_mode", std::to_string(w) + "x" + std::to_string(h) +
+                " refresh_mhz=" + std::to_string(refresh));
         s.outputWidth = w; s.outputHeight = h;
         s.outputDone = false;
     }

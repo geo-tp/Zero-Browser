@@ -25,7 +25,7 @@ class DisplayManager {
     std::vector<uint32_t> frame = std::vector<uint32_t>(320 * 170, 0x0b111a);
     ~DisplayManager();
     void open(const Config &, const fs::path &preview = {});
-    void startSession(const Paths &, Startup &, int height);
+    void startSession(const Paths &, Startup &, int height, const std::string &renderer);
     void stopSession(const std::function<void()> &heartbeat = {});
     void contentTop(int pixels);
     void tick(int fps);

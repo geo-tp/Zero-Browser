@@ -19,6 +19,10 @@ def check_package(package):
     with tarfile.open(fileobj=io.BytesIO(data)) as archive:
         members = {entry.name.removeprefix('./').rstrip('/'): entry
                    for entry in archive.getmembers()}
+        for path in members:
+            assert not any(path == root or path.startswith(root + '/')
+                           for root in ('usr/share/applications', 'usr/share/icons')), \
+                f'Unsupported desktop integration path: {path}'
         if 'usr/lib/zero-browser/qtwebkit-runtime/zero-qtwebkit' in members:
             root = 'usr/lib/zero-browser/'
             wrapper = archive.extractfile(members[root + 'zero-qtwebkit']).read()
@@ -45,8 +49,6 @@ def check_package(package):
                          'usr/lib/zero-browser/libzero-netsurf-gtk.so',
                          'usr/share/doc/zero-browser/copyright',
                          'usr/share/doc/zero-browser/UiFont.LICENSE',
-                         'usr/share/applications/zero-browser.desktop',
-                         'usr/share/icons/hicolor/scalable/apps/zero-browser.svg',
                          f'{app}/applications/zero-browser.desktop',
                          f'{app}/share/images/zero-browser.png'):
             assert required in members and members[required].isfile(), required
@@ -66,12 +68,6 @@ def check_package(package):
         desktop.read_string(archive.extractfile(
             members[f'{app}/applications/zero-browser.desktop']).read().decode('utf-8'))
         entry = desktop['Desktop Entry']
-        xdg = configparser.ConfigParser(interpolation=None)
-        xdg.read_string(archive.extractfile(
-            members['usr/share/applications/zero-browser.desktop']).read().decode('utf-8'))
-        for key in ('Type', 'Name', 'Comment', 'Exec', 'Terminal', 'Categories'):
-            assert xdg['Desktop Entry'][key] == entry[key], f'Desktop entries disagree: {key}'
-        assert xdg['Desktop Entry']['Icon'] == 'zero-browser'
         assert entry['Type'] == 'Application'
         assert entry.getboolean('Terminal') is False
         assert not entry.getboolean('Hidden', fallback=False)

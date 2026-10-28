@@ -39,13 +39,17 @@ if ROLE == 'wlr-randr':
     if fault != 'wrong-mode':
         (RUNTIME / 'mode').write_text(sys.argv[sys.argv.index('--custom-mode') + 1])
     sys.exit(0)
-if ROLE in ('netsurf-gtk', 'zero-qtwebkit', 'gtk-test'):
-    record('engine', role=ROLE)
+if ROLE == 'cogctl': sys.exit(0)
+if ROLE in ('netsurf-gtk', 'zero-qtwebkit', 'cog', 'gtk-test'):
+    record('engine', role=ROLE, renderer=os.environ.get('WLR_RENDERER'),
+           render_device=os.environ.get('WLR_RENDER_DRM_DEVICE'))
     fault = (RUNTIME / 'fault').read_text()
     if fault == 'engine': sys.exit(42)
     if fault != 'no-window': (RUNTIME / 'app').touch()
     if ROLE == 'zero-qtwebkit':
         print('ZERO_QT_EVENT ready 0 "" "ready"', flush=True)
+    if ROLE == 'cog':
+        print('<http://example.org/> Loaded successfully.', flush=True)
     sleep_forever()
 
 assert ROLE == 'labwc', ROLE
@@ -57,12 +61,17 @@ fault = FAULT
 if FAULT.endswith('-once'): fault = FAULT[:-5] if attempt == 1 else 'normal'
 if FAULT.endswith('-twice'): fault = FAULT[:-6] if attempt <= 2 else 'normal'
 (RUNTIME / 'fault').write_text(fault)
-record('compositor', attempt=attempt, fault=fault)
+record('compositor', attempt=attempt, fault=fault,
+       renderer=os.environ.get('WLR_RENDERER'),
+       render_device=os.environ.get('WLR_RENDER_DRM_DEVICE'))
 if fault == 'crash': sys.exit(12)
 # A descendant in its own session must also be stopped, without broad pkill.
 child = subprocess.Popen([sys.executable, '-c', 'import signal,time; signal.signal(signal.SIGTERM,signal.SIG_IGN); time.sleep(300)'], start_new_session=True)
 record('descendant', child=child.pid)
 if fault == 'socket': sleep_forever()
+if fault == 'swapchain':
+    print("Swapchain for output 'HEADLESS-1' failed test", flush=True)
+    sleep_forever()
 server = socket.socket(socket.AF_UNIX)
 server.bind(str(RUNTIME / 'wayland-0'))
 server.listen()

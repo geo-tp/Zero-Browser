@@ -62,9 +62,9 @@ void DisplayManager::activity(double time) {
 void DisplayManager::idle(double time, bool held) {
     if (screen_.tick(time, held)) present();
 }
-void DisplayManager::startSession(const Paths &p, Startup &startup, int height) {
+void DisplayManager::startSession(const Paths &p, Startup &startup, int height, const std::string &renderer) {
     startup.step("socket", StartupDomain::Wayland, [&] {
-        session_.start(p, [&](int, double) { startup.pulse(); return true; });
+        session_.start(p, renderer, [&](int, double) { startup.pulse(); return true; });
     });
     auto heartbeat = [&] {
         startup.pulse();
@@ -76,7 +76,7 @@ void DisplayManager::startSession(const Paths &p, Startup &startup, int height) 
     });
     configureDisplay(startup, wayland, environment(), height, heartbeat);
     session_.validated();
-    log("display.session", "private labwc, GLES2, direct SHM capture");
+    log("display.session", "private labwc, direct SHM capture");
 }
 void DisplayManager::stopSession(const std::function<void()> &heartbeat) {
     wayland.disconnect();

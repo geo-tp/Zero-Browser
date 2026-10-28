@@ -75,14 +75,17 @@ struct WaylandSession::Attempt {
         compositor.stop(.15);
         bus.stop(.15);
     }
-    bool start(int number, const Progress &progress) {
+    bool start(int number, const std::string &renderer, const Progress &progress) {
         bus.start({"dbus-daemon", "--session", "--nofork",
                    "--address=" + env.at("DBUS_SESSION_BUS_ADDRESS")}, env);
         auto wlEnv = env;
         wlEnv["WLR_BACKENDS"] = "headless";
         wlEnv["WLR_HEADLESS_OUTPUTS"] = "1";
-        wlEnv["WLR_RENDERER"] = "gles2";
-        wlEnv["WLR_RENDER_DRM_DEVICE"] = "/dev/dri/renderD128";
+        // Renderer selection belongs to the compositor, not the web engines.
+        wlEnv["WLR_RENDERER"] = zero::env("WLR_RENDERER", renderer);
+        if (wlEnv.at("WLR_RENDERER") == "gles2")
+            wlEnv["WLR_RENDER_DRM_DEVICE"] = "/dev/dri/renderD128";
+        log("wayland.renderer", wlEnv.at("WLR_RENDERER"));
         compositor.start({"labwc", "-C", (runtime.path / "labwc").string()}, wlEnv);
         const auto started = now();
         bool warned = false;
@@ -126,10 +129,10 @@ struct WaylandSession::Attempt {
 WaylandSession::WaylandSession() = default;
 WaylandSession::~WaylandSession() = default;
 void WaylandSession::stop() { attempt_.reset(); }
-bool WaylandSession::start(const Paths &paths, const Progress &progress) {
+bool WaylandSession::start(const Paths &paths, const std::string &renderer, const Progress &progress) {
     stop();
     attempt_ = std::make_unique<Attempt>(paths.runtime);
-    if (!attempt_->start(1, progress)) { stop(); return false; }
+    if (!attempt_->start(1, renderer, progress)) { stop(); return false; }
     return true;
 }
 void WaylandSession::validated() {

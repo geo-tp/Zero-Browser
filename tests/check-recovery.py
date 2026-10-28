@@ -14,11 +14,11 @@ import time
 
 HERE = Path(__file__).resolve().parent
 
-def run_case(binary, shim, usb, fault, expected, failure=None, cancel=None, mode='qtwebkit'):
+def run_case(binary, shim, usb, fault, expected, failure=None, cancel=None, mode='qtwebkit', renderer=None):
     with tempfile.TemporaryDirectory(prefix='zwl-') as temporary:
         root = Path(temporary)
         bindir = root/'bin'; bindir.mkdir()
-        for name in ('labwc','dbus-daemon','wlr-randr','netsurf-gtk','zero-qtwebkit','gtk-test'):
+        for name in ('labwc','dbus-daemon','wlr-randr','netsurf-gtk','zero-qtwebkit','cog','cogctl','gtk-test'):
             shutil.copyfile(HERE/'helpers/recovery-peer.py', bindir/name); (bindir/name).chmod(0o755)
         for name in ('runtime','config','state','cache','home'): (root/name).mkdir()
         os.mkfifo(root/'keyboard'); keyboard = os.open(root/'keyboard', os.O_RDWR|os.O_NONBLOCK)
@@ -28,6 +28,9 @@ def run_case(binary, shim, usb, fault, expected, failure=None, cancel=None, mode
                    LD_PRELOAD=str(shim), HOME=str(root/'home'), PATH=str(bindir)+':'+os.environ['PATH'],
                    XDG_RUNTIME_DIR=str(root/'runtime'), XDG_CONFIG_HOME=str(root/'config'),
                    XDG_STATE_HOME=str(root/'state'), XDG_CACHE_HOME=str(root/'cache'))
+        env.pop('WLR_RENDERER', None)
+        env.pop('WLR_RENDER_DRM_DEVICE', None)
+        if renderer is not None: env['WLR_RENDERER'] = renderer
         argv = [str(binary)]
         if usb: argv += ['--fb',str(root/'fb'),'--input',str(root/'keyboard'),'--program',str(bindir/'gtk-test')]
         else: argv += ['--frame-file',str(root/'frame.ppm'),'--mode',mode]
@@ -76,10 +79,14 @@ def run_case(binary, shim, usb, fault, expected, failure=None, cancel=None, mode
                 for e in records:
                     if e['kind']=='compositor':
                         assert not Path(e['runtime']).exists(), ('runtime leaked',e)
+                        selected = renderer or ('gles2' if mode == 'full' else 'pixman')
+                        assert e['renderer'] == selected, e
+                        assert e['render_device'] == ('/dev/dri/renderD128' if selected == 'gles2' else None), e
                     if e['kind'] in ('compositor','bus','engine','descendant'):
                         pid=e.get('child',e['pid'])
                         assert not Path(f'/proc/{pid}').exists(), ('owned process leaked',e)
                     if e['kind']=='engine':
+                        assert e['renderer'] == renderer and e['render_device'] is None, e
                         same=[x['kind'] for x in records[:records.index(e)] if x['runtime']==e['runtime']]
                         assert 'configure' in same, ('engine before output configuration',e)
                     if e['kind']=='capture': assert e['window'], 'capture before application window'
@@ -91,7 +98,7 @@ def run_case(binary, shim, usb, fault, expected, failure=None, cancel=None, mode
                     assert 'wayland.clipboard=MISSING' in log() and 'wayland.output=OK' in log()
                     assert 'wayland.retry attempt=2/3' in log() and 'wayland.retry attempt=3/3' in log()
                 assert unrelated.poll() is None, 'unrelated process was terminated'
-                print(f'PASS {"USB" if usb else mode} {fault} {cancel or failure or "ready"}: {attempts} attempt(s)',flush=True)
+                print(f'PASS {"USB" if usb else mode} {renderer or "default"} {fault} {cancel or failure or "ready"}: {attempts} attempt(s)',flush=True)
             except BaseException:
                 print(f'FAIL {usb=} {fault=} {mode=}\n'+log(),flush=True)
                 raise
@@ -116,7 +123,7 @@ def main():
         shim=Path(tmp)/'io.so'
         subprocess.run(['cc','-shared','-fPIC',str(HERE/'helpers/recovery-io.c'),'-ldl','-o',str(shim)],check=True)
         cases=[('normal',1,None,None),('delayed',1,None,None),('capture-twice',3,None,None),
-               ('config-once',2,None,None),('engine',1,'stage=engine',None)]
+               ('config-once',2,None,None),('swapchain-once',2,None,None),('engine',1,'stage=engine',None)]
         if not args.quick:
             cases += [('missing-output-once',2,None,None),('missing-clipboard',3,'stage=protocols',None),
                       ('socket-once',2,None,None),('handshake-once',2,None,None),
@@ -129,6 +136,9 @@ def main():
             tasks=[pool.submit(run_case,args.binary.resolve(),shim,args.usb,*case) for case in cases]
             if not args.usb:
                 tasks += [pool.submit(run_case,args.binary.resolve(),shim,False,'capture-once',2,None,None,'lite')]
+                tasks += [pool.submit(run_case,args.binary.resolve(),shim,False,'normal',1,None,None,mode,renderer)
+                          for mode in ('lite','qtwebkit') for renderer in ('pixman','gles2')]
+                tasks += [pool.submit(run_case,args.binary.resolve(),shim,False,'normal',1,None,None,'full')]
             for task in tasks: task.result()
 
 if __name__=='__main__': main()

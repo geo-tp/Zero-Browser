@@ -2,8 +2,9 @@
 #include "Utils/Util.h"
 namespace zero {
 struct Config {
+    static constexpr int DefaultFps = 20;
     std::string home = "https://lite.duckduckgo.com/lite/", fb = "/dev/fb0", input;
-    int fps = 10, webLimit = 160, netLimit = 80;
+    int fps = DefaultFps, webLimit = 160, netLimit = 80;
     double conservative = .25, strict = .50;
     double pressureMb = 80, criticalMb = 40, hysteresisMb = 12;
     double pressureSeconds = 12, recoverySeconds = 8;

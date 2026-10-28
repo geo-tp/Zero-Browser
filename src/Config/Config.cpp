@@ -33,7 +33,7 @@ void Config::load(const Paths &p) {
         }
     }
     if (fps < 2 || fps > 30)
-        fps = 10;
+        fps = DefaultFps;
     if (!(criticalMb >= 16 && criticalMb < pressureMb && pressureMb <= 200)) {
         criticalMb = 40;
         pressureMb = 80;

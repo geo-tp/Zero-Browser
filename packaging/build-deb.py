@@ -43,10 +43,6 @@ def main():
                 'usr/share/APPLaunch/applications/zero-browser.desktop')
         install(ROOT / 'packaging/assets/zero-browser.png',
                 'usr/share/APPLaunch/share/images/zero-browser.png')
-        install(ROOT / 'packaging/desktop/zero-browser.desktop',
-                'usr/share/applications/zero-browser.desktop')
-        install(ROOT / 'packaging/assets/zero-browser.svg',
-                'usr/share/icons/hicolor/scalable/apps/zero-browser.svg')
         control = stage / 'DEBIAN/control'
         control.parent.mkdir(parents=True)
         control.write_text(f'''Package: {PACKAGE}
